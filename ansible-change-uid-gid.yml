@@ -1,0 +1,72 @@
+# ansible playbook to modify uids and gids to
+- hosts: all
+  vars:
+
+  # List of NEW uids to change existing users to
+    user_dict:
+      beaver: 3001
+      nova: 3002
+
+  # List of NEW gids to change existing users to
+    group_dict:
+      beaver: 4
+      nova: 4
+
+  tasks:
+  - name: find current uid
+    command: id -u "{{ item.key }}"
+    with_dict: "{{ user_dict }}"
+    ignore_errors: true
+    register: my_uid
+
+  - name: find current gid
+    command: id -g "{{ item.key }}"
+    with_dict: "{{ group_dict }}"
+    ignore_errors: true
+    register: my_gid
+
+  - name: Change user to new uid
+    command: "usermod -u {{ item.item.value }} {{ item.item.key }}"
+    become: true
+    with_items: "{{ my_uid.results }}"
+    when: item.rc == 0
+    register: uid_change
+
+  - name: Change group to new uid
+    command: "usermod -g {{ item.item.value }} {{ item.item.key }}"
+    become: true
+    with_items: "{{ my_gid.results }}"
+    when: item.rc == 0
+    register: gid_change
+
+
+  - name: echo current uid on every host
+    debug:
+      var: uid_change
+
+
+  - name: Change all the files owned by old uid to new uid
+    #command: "find / -path /proc -prune -o -user {{ item.stdout }} -print"
+    command: bash -c "find / -path /proc -prune -o -user {{ item.stdout }} -print | xargs chown -h {{ item.item.key }}"
+    become: true
+    with_items: "{{ my_uid.results }}"
+    when: item.rc == 0
+    register: uid_files
+
+  - name: Change all the files owned by old gid to new gid
+    #command: "find / -path /proc -prune -o -group {{ item.stdout }} -print"
+    command: bash -c "find / -path /proc -prune -o -group {{ item.stdout }} -print | xargs chgrp -h {{ item.item.key }}"
+    become: true
+    with_items: "{{ my_gid.results }}"
+    when: item.rc == 0
+    register: gid_files
+
+
+  - name: Show files with uid changes
+    debug:
+      msg: "{{ uid_files.results }}"
+
+
+
+
+
