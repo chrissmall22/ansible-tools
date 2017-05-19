@@ -1,0 +1,8 @@
+#!/bin/bash
+
+ARG=`echo $* | cut -b 12-`
+CMD="/usr/local/bin/pmrun -b -u root sh /home/stack/pb_helper "
+echo `date` >> /var/log/pbrun.log
+echo $CMD >> /var/log.pbrun.log
+
+$CMD $ARG

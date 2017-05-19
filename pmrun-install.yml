@@ -1,0 +1,24 @@
+# ansible playbook to modify uids and gids to  
+- hosts: all
+  vars:
+    files_loc: /home/stack/hops/files
+
+  tasks:
+  - name: Copy pbrun to remote machine 
+    copy:
+      src: "{{ files_loc }}/pbrun"
+      dest: /usr/local/bin/pbrun
+      owner: root
+      group: root
+      mode: 0755
+    become: yes
+
+  - name: Copy pb_helper to remote machine
+    copy:
+      src: "{{ files_loc }}/pb_helper"
+      dest: /home/stack/pb_helper
+      owner: stack
+      group: stack
+      mode: 0755
+
+  
